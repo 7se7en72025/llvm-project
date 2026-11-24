@@ -138,7 +138,7 @@ generateReproducerForInvocationArguments(
     for (const auto &J : C->getJobs()) {
       Driver::CompilationDiagnosticReport Report;
       TheDriver.generateCompilationDiagnostics(
-          *C, J, generateReproducerMetaInfo(Info), &Report);
+          *C, J, /*ForCrash=*/false, generateReproducerMetaInfo(Info), &Report);
       return Report;
     }
   }

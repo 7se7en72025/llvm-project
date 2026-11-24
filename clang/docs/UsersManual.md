@@ -827,6 +827,8 @@ Specify where to write the crash diagnostics files as a tarball.
 Clang is also capable of generating preprocessed source file(s) and associated
 run script(s) even without a crash. This is especially useful when trying to
 generate a reproducer for warnings or errors while using modules.
+When Clang generates a reproducer without crashing, it lists the files without
+requesting a bug report.
 
 :::{option} -gen-reproducer
 

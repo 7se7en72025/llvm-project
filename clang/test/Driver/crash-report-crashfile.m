@@ -12,7 +12,8 @@
 // RUN: not %clang -gen-reproducer -fsyntax-only %s \
 // RUN:   -I %S/Inputs/module -isysroot %/t/i/ \
 // RUN:   -fmodules -fmodules-cache-path=%t/m/ -DFOO=BAR 2>&1 | \
-// RUN:   FileCheck -check-prefix=CRASH_FLAG %s
+// RUN:   FileCheck -check-prefix=REPRO_FLAG --implicit-check-not='BUG REPORT' \
+// RUN:     --implicit-check-not='Crash backtrace' %s
 
 @import simple;
 const int x = MODULE_MACRO;
@@ -26,10 +27,8 @@ const int x = MODULE_MACRO;
 // CRASH_ENV-NEXT: note: diagnostic msg: Crash backtrace is located in
 // CRASH_ENV-NEXT: note: diagnostic msg: {{.*}}Library/Logs/DiagnosticReports{{.*}}
 
-// CRASH_FLAG: failing because '-gen-reproducer' is used
-// CRASH_FLAG: PLEASE ATTACH THE FOLLOWING CRASH REPRODUCER FILES TO THE BUG REPORT:
-// CRASH_FLAG-NEXT: note: diagnostic msg: {{.*}}.m
-// CRASH_FLAG-NEXT: note: diagnostic msg: {{.*}}.cache
-// CRASH_FLAG-NEXT: note: diagnostic msg: {{.*}}.sh
-// CRASH_FLAG-NEXT: note: diagnostic msg: Crash backtrace is located in
-// CRASH_FLAG-NEXT: note: diagnostic msg: {{.*}}Library/Logs/DiagnosticReports{{.*}}
+// REPRO_FLAG: failing because '-gen-reproducer' is used
+// REPRO_FLAG: Reproducer files:
+// REPRO_FLAG-NEXT: note: diagnostic msg: {{.*}}.m
+// REPRO_FLAG-NEXT: note: diagnostic msg: {{.*}}.cache
+// REPRO_FLAG-NEXT: note: diagnostic msg: {{.*}}.sh

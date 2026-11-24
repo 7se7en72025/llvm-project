@@ -32,7 +32,7 @@
 // Likewise for -gen-reproducer, the reproducer script should target the first arch.
 // RUN: env CLANG_CRASH_DIAGNOSTICS_DIR=%t \
 // RUN:   not %clang %s -arch arm64 -arch arm64e -fsyntax-only -gen-reproducer 2>&1 | \
-// RUN:   FileCheck --check-prefix=CHECK %s
+// RUN:   FileCheck --check-prefix=REPRO --implicit-check-not='BUG REPORT' %s
 // RUN: cat %t/crash-report-*.sh | FileCheck --check-prefix=CHECKSH-arm64 %s
 
 // REQUIRES: crash-recovery, system-darwin
@@ -40,6 +40,8 @@
 
 // CHECK: PLEASE ATTACH THE FOLLOWING CRASH REPRODUCER FILES TO THE BUG REPORT:
 // CHECK-NEXT: note: diagnostic msg: {{.*}}crash-report-{{.*}}.c
+// REPRO: Reproducer files:
+// REPRO-NEXT: note: diagnostic msg: {{.*}}crash-report-{{.*}}.c
 
 // CHECKSH-x86_64: # Crash reproducer
 // CHECKSH-x86_64: "-cc1"

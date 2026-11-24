@@ -2083,11 +2083,10 @@ static const char BugReportMsg[] =
     "\n********************\n\n"
     "PLEASE ATTACH THE FOLLOWING CRASH REPRODUCER FILES TO THE BUG REPORT:";
 
-// When clang crashes, produce diagnostic information including the fully
-// preprocessed source file(s).  Request that the developer attach the
-// diagnostic information to a bug report.
+// Produce diagnostic information including the fully preprocessed source
+// files. For crashes, ask the developer to attach the files to a bug report.
 void Driver::generateCompilationDiagnostics(
-    Compilation &C, const Command &FailingCommand,
+    Compilation &C, const Command &FailingCommand, bool ForCrash,
     StringRef AdditionalInformation, CompilationDiagnosticReport *Report) {
   if (C.getArgs().hasArg(options::OPT_fno_crash_diagnostics))
     return;
@@ -2104,6 +2103,9 @@ void Driver::generateCompilationDiagnostics(
   }
   if (!Level)
     return;
+
+  const char *ReproducerMessage =
+      ForCrash ? BugReportMsg : "\n********************\n\nReproducer files:";
 
   // Don't try to generate diagnostics for dsymutil jobs.
   if (FailingCommand.getCreator().isDsymutilJob())
@@ -2142,7 +2144,8 @@ void Driver::generateCompilationDiagnostics(
 
   // If lld failed, rerun it again with --reproduce.
   if (IsLLD) {
-    const char *TmpName = CreateTempFile(C, "linker-crash", "tar");
+    const char *TmpName =
+        CreateTempFile(C, ForCrash ? "linker-crash" : "linker-repro", "tar");
     Command NewLLDInvocation = Cmd;
     llvm::opt::ArgStringList ArgList = NewLLDInvocation.getArguments();
     StringRef ReproduceOption =
@@ -2154,7 +2157,7 @@ void Driver::generateCompilationDiagnostics(
 
     // Redirect stdout/stderr to /dev/null.
     NewLLDInvocation.Execute({std::nullopt, {""}, {""}}, nullptr, nullptr);
-    Diag(clang::diag::note_drv_command_failed_diag_msg) << BugReportMsg;
+    Diag(clang::diag::note_drv_command_failed_diag_msg) << ReproducerMessage;
     Diag(clang::diag::note_drv_command_failed_diag_msg) << TmpName;
     Diag(clang::diag::note_drv_command_failed_diag_msg)
         << "\n\n********************";
@@ -2295,7 +2298,7 @@ void Driver::generateCompilationDiagnostics(
     TempFiles.push_back(std::string(Path.begin(), Path.end()));
   }
 
-  Diag(clang::diag::note_drv_command_failed_diag_msg) << BugReportMsg;
+  Diag(clang::diag::note_drv_command_failed_diag_msg) << ReproducerMessage;
 
   SmallString<128> VFS;
   SmallString<128> ReproCrashFilename;
@@ -2332,7 +2335,8 @@ void Driver::generateCompilationDiagnostics(
     Diag(clang::diag::note_drv_command_failed_diag_msg)
         << "Error generating run script: " << Script << " " << EC.message();
   } else {
-    ScriptOS << "# Crash reproducer for " << getClangFullVersion() << "\n"
+    ScriptOS << (ForCrash ? "# Crash reproducer for " : "# Reproducer for ")
+             << getClangFullVersion() << "\n"
              << "# Driver args: ";
     printArgList(ScriptOS, C.getInputArgs());
     ScriptOS << "# Original command: ";
@@ -2409,7 +2413,7 @@ void Driver::generateCompilationDiagnostics(
   }
 
   // On darwin, provide information about the .crash diagnostic report.
-  if (llvm::Triple(llvm::sys::getProcessTriple()).isOSDarwin()) {
+  if (ForCrash && llvm::Triple(llvm::sys::getProcessTriple()).isOSDarwin()) {
     SmallString<128> CrashDiagDir;
     if (getCrashDiagnosticFile(ReproCrashFilename, CrashDiagDir)) {
       Diag(clang::diag::note_drv_command_failed_diag_msg)

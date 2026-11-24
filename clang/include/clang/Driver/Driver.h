@@ -559,7 +559,7 @@ public:
   /// including preprocessed source file(s).
   ///
   void generateCompilationDiagnostics(
-      Compilation &C, const Command &FailingCommand,
+      Compilation &C, const Command &FailingCommand, bool ForCrash,
       StringRef AdditionalInformation = "",
       CompilationDiagnosticReport *GeneratedReport = nullptr);
 
@@ -582,13 +582,14 @@ public:
       CompilationDiagnosticReport *GeneratedReport = nullptr) {
     if (static_cast<int>(CS) > static_cast<int>(Level))
       return false;
+    const bool ForceCrash = ::getenv("FORCE_CLANG_DIAGNOSTICS_CRASH") != nullptr;
     if (CS != CommandStatus::Crash)
-      Diags.Report(diag::err_drv_force_crash)
-          << !::getenv("FORCE_CLANG_DIAGNOSTICS_CRASH");
+      Diags.Report(diag::err_drv_force_crash) << !ForceCrash;
     // Hack to ensure that diagnostic notes get emitted.
     Diags.setLastDiagnosticIgnored(false);
-    generateCompilationDiagnostics(C, FailingCommand, AdditionalInformation,
-                                   GeneratedReport);
+    generateCompilationDiagnostics(C, FailingCommand,
+                                   CS == CommandStatus::Crash || ForceCrash,
+                                   AdditionalInformation, GeneratedReport);
     return true;
   }
 
